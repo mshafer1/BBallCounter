@@ -79,7 +79,11 @@ namespace BBallCounterWidget
             //NetWorker.RunWorkerAsync(options.UPDATE);
             Task A = new Task(() => setup_server());
             A.Start();
-            A.Wait();            
+            A.Wait();
+            if (serverIP == "")
+            {
+                throw new Exception("Error: Cannot find server");
+            }
 
             A = new Task(() => update_server(options.UPDATE));
             A.Start();
