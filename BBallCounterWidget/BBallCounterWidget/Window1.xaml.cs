@@ -18,6 +18,9 @@ using System.IO;
 using System.Net.Sockets;
 using System.Net;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace BBallCounterWidget
 {
     /// <summary>
@@ -29,13 +32,9 @@ namespace BBallCounterWidget
         Game game1;
         string serverIP;
         BackgroundWorker NetWorker;
-        TcpClient client;
-        NetworkStream stream;
-        IPAddress address;
         const int port = 1005;
-        StreamReader reader;
-        StreamWriter writer;
         DispatcherTimer timer;
+        
 
 
         private enum options
@@ -55,20 +54,18 @@ namespace BBallCounterWidget
 
             NetWorker = new BackgroundWorker();
             NetWorker.DoWork += NetWorker_DoWork;
-            client = null;
-            reader = null;
-            writer = null;
-            address = IPAddress.Parse("127.0.0.1");
-            stream = null;
             timer = new DispatcherTimer();
             timer.Interval = new TimeSpan(0, 15, 0);
             timer.IsEnabled = false;
-            timer.Tick += timer_Tick;
+            timer.Tick += timer_Tick;            
+            Thread.CurrentThread.Name = "Main";
         }
 
         void timer_Tick(object sender, EventArgs e)
         {
-            NetWorker.RunWorkerAsync(options.UPDATE);
+            Task A = new Task(() => update_server(options.YES));
+            A.Start();
+            updateTime();
         }
 
         void Window1_Loaded(object sender, RoutedEventArgs e)
@@ -77,11 +74,18 @@ namespace BBallCounterWidget
             game1 = new Game(0);
             this.myGauge1.DataContext = game1;
 
-            
-            //update gauge
-            NetWorker.RunWorkerAsync(options.UPDATE);
 
-           
+            //update gauge
+            //NetWorker.RunWorkerAsync(options.UPDATE);
+            Task A = new Task(() => setup_server());
+            A.Start();
+            A.Wait();            
+
+            A = new Task(() => update_server(options.UPDATE));
+            A.Start();
+            A.Wait();
+            this.IsEnabled = true;
+            timer.IsEnabled = true;
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -92,7 +96,7 @@ namespace BBallCounterWidget
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            
+
         }
 
         private void Window_Initialized(object sender, EventArgs e)
@@ -108,34 +112,44 @@ namespace BBallCounterWidget
         private void btnYes_Click(object sender, RoutedEventArgs e)
         {
             //update gauge
-            NetWorker.RunWorkerAsync(options.YES);
+            Task A = new Task(() => update_server(options.YES));
+            A.Start();
+            updateTime();
         }
 
         private void btnYesLate_Click(object sender, RoutedEventArgs e)
         {
             //update gauge
-            NetWorker.RunWorkerAsync(options.YES_LATE);
+            Task A = new Task(() => update_server(options.YES_LATE));
+            A.Start();
+            updateTime();
         }
 
         private void btnMaybe_Click(object sender, RoutedEventArgs e)
         {
             //update gauge
-            NetWorker.RunWorkerAsync(options.MAYBE);
+            Task A = new Task(() => update_server(options.MAYBE));
+            A.Start();
+            updateTime();
         }
 
         private void btnNo_Click(object sender, RoutedEventArgs e)
         {
             //update gauge
-            NetWorker.RunWorkerAsync(options.UPDATE); //currently, ignoring no's on Form
+            Task A = new Task(() => update_server(options.UPDATE));//currently, ignoring no's on Form
+            A.Start();
+            updateTime(); 
         }
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
         {
             //update gauge
-            NetWorker.RunWorkerAsync(options.UPDATE);
+            Task A = new Task(() => update_server(options.UPDATE));
+            A.Start();
+            updateTime();
         }
 
-        void NetWorker_DoWork(object sender, DoWorkEventArgs eventArgs)
+        void setup_server()
         {
             if (serverIP == "")
             {
@@ -151,26 +165,44 @@ namespace BBallCounterWidget
                 }
                 catch
                 {
-                    MessageBox.Show(@"Could not access \\nirvana.natinst.com\users\msahfer\bballCounterServer.ip","Error: Could not get file");
-                    //serverIP = "192.168.1.75";
+                    MessageBox.Show(@"Could not access \\nirvana.natinst.com\users\msahfer\bballCounterServer.ip", "Error: Could not get file");
+                    throw; //serverIP = "192.168.1.75";
                 }
-                
             }
+        }
+
+        void update_server(options input_var)
+        {
+            //while (Thread.CurrentThread.ThreadState == ThreadState.Running) ;
+            TcpClient client;
+            NetworkStream stream;
+            IPAddress address;
+
+            StreamReader reader;
+            StreamWriter writer;
+ 
+
             //establish connection to server - if not already there
-            if (client == null)
+            try
             {
                 client = new TcpClient(serverIP, port);
-                stream = client.GetStream();
-                reader = new StreamReader(stream);
-                writer = new StreamWriter(stream) { AutoFlush = true };
             }
+            catch
+            {
+                MessageBox.Show("Could not connect to server - likely due to others trying to connect at the same time", "Error: Could not connect to server");
+                return; //could not connect - likely due to an existing connection
+            }
+            stream = client.GetStream();
+            reader = new StreamReader(stream);
+            writer = new StreamWriter(stream) { AutoFlush = true };
+            address = IPAddress.Parse("127.0.0.1");
 
             //send query
             string message = "BBallCounter:";
-            if (eventArgs.Argument.GetType() == typeof(options))
+            if (input_var.GetType() == typeof(options))
             {
-                
-                switch ((options)eventArgs.Argument)
+
+                switch ((options)input_var)
                 {
                     case (options.YES):
                         message += "YES";
@@ -192,8 +224,8 @@ namespace BBallCounterWidget
             //update gauge
             try
             {
-                Byte[] Bytes =  System.Text.Encoding.ASCII.GetBytes(message);
-               var data = new Byte[256];
+                Byte[] Bytes = System.Text.Encoding.ASCII.GetBytes(message);
+                var data = new Byte[256];
                 Int32 bytes = stream.Read(data, 0, data.Length);
                 var responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
                 string received = responseData;
@@ -210,9 +242,12 @@ namespace BBallCounterWidget
             }
 
             client.Close();
-            client = null;
-            timer.IsEnabled = true;
-            updateTime();
+            
+        }
+
+        void NetWorker_DoWork(object sender, DoWorkEventArgs eventArgs)
+        {
+            
         }
 
         delegate void invoker();
@@ -226,7 +261,7 @@ namespace BBallCounterWidget
             }
 
             lblLastUpdate.Content = "Last updated: " + DateTime.Now.ToShortTimeString();
-            this.IsEnabled = true;
+            
         }
     }
 
