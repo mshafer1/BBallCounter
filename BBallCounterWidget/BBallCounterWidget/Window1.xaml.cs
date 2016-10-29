@@ -63,7 +63,7 @@ namespace BBallCounterWidget
 
         void timer_Tick(object sender, EventArgs e)
         {
-            Task A = new Task(() => update_server(options.YES));
+            Task A = new Task(() => update_server(options.UPDATE));
             A.Start();
             updateTime();
         }
@@ -140,7 +140,7 @@ namespace BBallCounterWidget
         private void btnNo_Click(object sender, RoutedEventArgs e)
         {
             //update gauge
-            Task A = new Task(() => update_server(options.UPDATE));//currently, ignoring no's on Form
+            Task A = new Task(() => update_server(options.NO));//currently, ignoring no's on Form
             A.Start();
             updateTime(); 
         }
@@ -216,6 +216,9 @@ namespace BBallCounterWidget
                         break;
                     case (options.MAYBE):
                         message += "PROBABLY";
+                        break;
+                    case (options.NO):
+                        message += "NO";
                         break;
                     case (options.UPDATE):
                         message += "UPDATE";
