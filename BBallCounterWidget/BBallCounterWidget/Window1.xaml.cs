@@ -169,8 +169,9 @@ namespace BBallCounterWidget
                 }
                 catch
                 {
+                    serverIP = "192.168.1.75";
                     MessageBox.Show(@"Could not access \\nirvana.natinst.com\users\msahfer\bballCounterServer.ip", "Error: Could not get file");
-                    throw; //serverIP = "192.168.1.75";
+                    //throw; //
                 }
             }
         }

@@ -4,6 +4,7 @@ import googleForm
 import timestamp
 import datetime
 
+import MySQL
 
 def getIP():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -13,10 +14,14 @@ def getIP():
     return ip
 
 class server():
+
+
     MY_HOST = getIP()
     MY_PORT = 1005
 
     def __init__(self):
+        self.this_db = MySQL.db('bballCounter','players')
+
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print "TCP target IP:", server.MY_HOST
         print "TCP target port:", server.MY_PORT
@@ -33,26 +38,29 @@ class server():
                 data = connection.recv(255)
                 print "{0} Receiving\n\tFrom: {1}\n\tData: {2}".format(timestamp.timeStamp(), address, data)
                 if data[:12] == 'BBallCounter':
-                    #post to google form
                     if data[13:].strip().upper() == "UPDATE":
                         pass # always updates
-                    elif(self._should_update(address)):
-                        if data[13:].strip().upper() == googleForm.FormConstants.YES.upper():
-                            googleForm.post(googleForm.FormConstants.YES)
-                        elif data[13:].strip().upper() == googleForm.FormConstants.YES_LATE.upper():
-                            googleForm.post(googleForm.FormConstants.YES_LATE)
-                        elif data[13:].strip().upper() == googleForm.FormConstants.MAYBE.upper():
-                            googleForm.post(googleForm.FormConstants.MAYBE)
-                        elif data[13:].strip().upper() == googleForm.FormConstants.NO.upper():
-                            googleForm.post(googleForm.FormConstants.NO)
-                        else:
-                            print '{0}: Ignoring message: {1}'.format(timestamp.timeStamp(), data[13:])
+                    elif data[13:].strip().upper() == googleForm.FormConstants.YES.upper():
+                        # googleForm.post(googleForm.FormConstants.YES)
+                        self.this_db.update_player(address, data[13:].strip().upper())
+                    elif data[13:].strip().upper() == googleForm.FormConstants.YES_LATE.upper():
+                        # googleForm.post(googleForm.FormConstants.YES_LATE)
+                        self.this_db.update_player(address, data[13:].strip().upper())
+                    elif data[13:].strip().upper() == googleForm.FormConstants.MAYBE.upper():
+                        # googleForm.post(googleForm.FormConstants.MAYBE)
+                        self.this_db.update_player(address, data[13:].strip().upper())
+                    elif data[13:].strip().upper() == googleForm.FormConstants.NO.upper():
+                        # googleForm.post(googleForm.FormConstants.NO)
+                        self.this_db.update_player(address, data[13:].strip().upper())
                     else:
-                        print '{0}: Ignoring update from: {0}'.format(timestamp.timeStamp(), address)
+                        print '{0}: Ignoring message: {1}'.format(timestamp.timeStamp(), data[13:])
+                    # else:
+                    #     print '{0}: Ignoring update from: {0}'.format(timestamp.timeStamp(), address)
 
 
                     #get google form data
-                    count = googleForm.get()
+                    # count = googleForm.get()
+                    count = self.this_db.get_count()
                     message = "BBallCounter:{0}".format(count)
                     print '{0}: Sending: {1}'.format(timestamp.timeStamp(), message)
                     connection.send(message)

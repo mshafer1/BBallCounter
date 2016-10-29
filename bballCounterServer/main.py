@@ -1,6 +1,10 @@
 __author__ = 'Matthew'
 import networking
 
+dbName = 'bballcounter'
+tbName = 'players'
+
+
 if __name__ == '__main__':
     #post ip address to nirvana
     ip = networking.getIP()
@@ -11,6 +15,8 @@ if __name__ == '__main__':
     except IOError as e:
         print e
         # raise
+
+
 
     server = networking.server()
     server.run()
