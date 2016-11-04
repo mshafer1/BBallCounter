@@ -32,9 +32,9 @@ namespace BBallCounterWidget
         Game game1;
         string serverIP;
         BackgroundWorker NetWorker;
-        const int port = 1005;
+        const int port = 2005;
         DispatcherTimer timer;
-        
+        int date;
 
 
         private enum options
@@ -43,7 +43,8 @@ namespace BBallCounterWidget
             YES_LATE,
             MAYBE,
             NO,
-            UPDATE
+            UPDATE,
+            LABEL
         }
 
         public Window1()
@@ -52,19 +53,23 @@ namespace BBallCounterWidget
             this.Loaded += new RoutedEventHandler(Window1_Loaded);
             serverIP = "";
 
+            date = DateTime.Now.Day - 1;
+
             NetWorker = new BackgroundWorker();
             NetWorker.DoWork += NetWorker_DoWork;
+
             timer = new DispatcherTimer();
             timer.Interval = new TimeSpan(0, 15, 0);
             timer.IsEnabled = false;
             timer.Tick += timer_Tick;            
             Thread.CurrentThread.Name = "Main";
+
         }
 
         void timer_Tick(object sender, EventArgs e)
-        {
-            Task A = new Task(() => update_server(options.UPDATE));
-            A.Start();
+        {            
+            Task B = new Task(() => update_server(options.UPDATE));
+            B.Start();
             updateTime();
         }
 
@@ -170,7 +175,6 @@ namespace BBallCounterWidget
                 catch
                 {
                     MessageBox.Show(@"Could not access \\nirvana.natinst.com\users\msahfer\bballCounterServer.ip", "Error: Could not get file");
-                    throw; //serverIP = "192.168.1.75";
                 }
             }
         }
@@ -205,48 +209,80 @@ namespace BBallCounterWidget
             string message = "BBallCounter:";
             if (input_var.GetType() == typeof(options))
             {
-
-                switch ((options)input_var)
+                if ((options)input_var == options.LABEL)
                 {
-                    case (options.YES):
-                        message += "YES";
-                        break;
-                    case (options.YES_LATE):
-                        message += "Yes+-+Late";
-                        break;
-                    case (options.MAYBE):
-                        message += "PROBABLY";
-                        break;
-                    case (options.NO):
-                        message += "NO";
-                        break;
-                    case (options.UPDATE):
-                        message += "UPDATE";
-                        break;
+                    message += "LABEL";
+                    writer.WriteLine(message);
+
+                    //update gauge
+                    try
+                    {
+                        Byte[] Bytes = System.Text.Encoding.ASCII.GetBytes(message);
+                        var data = new Byte[256];
+                        Int32 bytes = stream.Read(data, 0, data.Length);
+                        var responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
+                        string received = responseData;
+                        if (received.Substring(0, 12) == "BBallCounter")
+                        {
+
+                            string response = received.Substring(13);
+                            game1.Label = response;
+                        }
+                    }
+                    catch
+                    {
+                        //don't crash
+                    }
                 }
-
-                writer.WriteLine(message);
-            }
-
-            //update gauge
-            try
-            {
-                Byte[] Bytes = System.Text.Encoding.ASCII.GetBytes(message);
-                var data = new Byte[256];
-                Int32 bytes = stream.Read(data, 0, data.Length);
-                var responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
-                string received = responseData;
-                if (received.Substring(0, 12) == "BBallCounter")
+                else
                 {
+                    switch ((options)input_var)
+                    {
+                        case (options.YES):
+                            message += "YES";
+                            break;
+                        case (options.YES_LATE):
+                            message += "Yes+-+Late";
+                            break;
+                        case (options.MAYBE):
+                            message += "PROBABLY";
+                            break;
+                        case (options.NO):
+                            message += "NO";
+                            break;
+                        case (options.UPDATE):
+                            message += "UPDATE";
+                            break;
+                        case (options.LABEL):
+                            message += "LABEL";
+                            break;
+                    }
 
-                    int count = Convert.ToInt32(received.Substring(13));
-                    game1.Score = count;
+                    writer.WriteLine(message);
+
+                    //update gauge
+                    try
+                    {
+                        Byte[] Bytes = System.Text.Encoding.ASCII.GetBytes(message);
+                        var data = new Byte[256];
+                        Int32 bytes = stream.Read(data, 0, data.Length);
+                        var responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
+                        string received = responseData;
+                        if (received.Substring(0, 12) == "BBallCounter")
+                        {
+
+                            int count = Convert.ToInt32(received.Substring(13));
+                            game1.Score = count;
+                        }
+                    }
+                    catch
+                    {
+                        //don't crash
+                    }
                 }
             }
-            catch
-            {
-                //don't crash
-            }
+
+            
 
             client.Close();
             
@@ -268,6 +304,15 @@ namespace BBallCounterWidget
             }
 
             lblLastUpdate.Content = "Last updated: " + DateTime.Now.ToShortTimeString();
+
+            if (date != DateTime.Now.Day)
+            {
+                date = DateTime.Now.Day;
+
+                Task A = new Task(() => update_server(options.LABEL));
+                A.Start();
+                A.Wait();
+            }
             
         }
     }
@@ -288,6 +333,20 @@ namespace BBallCounterWidget
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("Score"));
+                }
+            }
+        }
+
+        private string label;
+        public string Label
+        {
+            get { return label; }
+            set
+            {
+                label = value;
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs("Label"));
                 }
             }
         }
