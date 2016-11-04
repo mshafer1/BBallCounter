@@ -14,7 +14,7 @@ def getIP():
 
 class server():
     MY_HOST = getIP()
-    MY_PORT = 1005
+    MY_PORT = 2005
 
     def __init__(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,8 +34,14 @@ class server():
                 print "{0} Receiving\n\tFrom: {1}\n\tData: {2}".format(timestamp.timeStamp(), address, data)
                 if data[:12] == 'BBallCounter':
                     #post to google form
+                    update = True
                     if data[13:].strip().upper() == "UPDATE":
-                        pass # always updates
+                        pass
+                    elif data[13:].strip().upper() == "LABEL":
+                        update = False
+                        message = "BBallCounter:".format(count)
+                        print '{0}: Sending: {1}'.format(timestamp.timeStamp(), message)
+                        connection.send(message)
                     elif(self._should_update(address)):
                         if data[13:].strip().upper() == googleForm.FormConstants.YES.upper():
                             googleForm.post(googleForm.FormConstants.YES)
@@ -47,15 +53,16 @@ class server():
                             googleForm.post(googleForm.FormConstants.NO)
                         else:
                             print '{0}: Ignoring message: {1}'.format(timestamp.timeStamp(), data[13:])
+                            update = False
                     else:
                         print '{0}: Ignoring update from: {0}'.format(timestamp.timeStamp(), address)
 
-
-                    #get google form data
-                    count = googleForm.get()
-                    message = "BBallCounter:{0}".format(count)
-                    print '{0}: Sending: {1}'.format(timestamp.timeStamp(), message)
-                    connection.send(message)
+                    if update:
+                        #get google form data
+                        count = googleForm.get()
+                        message = "BBallCounter:{0}".format(count)
+                        print '{0}: Sending: {1}'.format(timestamp.timeStamp(), message)
+                        connection.send(message)
                 else:
                     print "{0}: Ignoring\n\tFrom: {1}\n\tData: {2}".format(timestamp.timeStamp(), address, data)
             except Exception as e:
@@ -63,7 +70,7 @@ class server():
 
     def _should_update(self, ip):
         this_player = player(ip)
-        print "{0}: Investigatin Player\n\t{1}".format(timestamp.timeStamp(), this_player)
+        print "{0}: Investigating Player\n\t{1}".format(timestamp.timeStamp(), this_player)
         result = updateRoster(this_player) # true if new date
         return result
 server.roster = {}

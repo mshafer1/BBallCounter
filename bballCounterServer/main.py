@@ -6,7 +6,7 @@ if __name__ == '__main__':
     ip = networking.getIP()
 
     try:
-        with open(r'\\nirvana.natinst.com\users\mshafer\bballCounterServer.ip','w') as confi_file:
+        with open(r'//nirvana.natinst.com/users/mshafer/bballCounterServer.ip','w') as confi_file:
             confi_file.write(ip)
     except IOError as e:
         print e

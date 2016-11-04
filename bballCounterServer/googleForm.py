@@ -28,7 +28,7 @@ class FormConstants:
     YES = 'Yes'
     NO = 'No'
     MAYBE = 'Probably'
-    YES_LATE = 'Yes+-+Late'
+    YES_LATE = 'Yes+-+late'
     _GOOGLE_YES_LATE = 'Yes - Late'
 
 
