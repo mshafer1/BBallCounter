@@ -31,7 +31,7 @@ class server():
                 address = address[0]
                 print '{0}: Connection from: {1}'.format(timestamp.time_stamp(), address)
                 data = connection.recv(255)
-                print "{0} Receiving\n\tFrom: {1}\n\tData: {2}".format(timestamp.time_stamp(), address, data)
+                print "{0} Receiving\n\tFrom: {1}\n\tData: {2}".format(timestamp.time_stamp(), address, data.strip())
                 if data[:12] == 'BBallCounter':
                     #post to google form
                     update = True
@@ -67,6 +67,7 @@ class server():
                     print "{0}: Ignoring\n\tFrom: {1}\n\tData: {2}".format(timestamp.time_stamp(), address, data)
             except Exception as e:
                 print e
+            print ''
 
     def _should_update(self, ip):
         this_player = player(ip)
