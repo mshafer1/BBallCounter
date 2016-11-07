@@ -29,9 +29,9 @@ class server():
             try:
                 connection, address = self.s.accept()
                 address = address[0]
-                print '{0}: Connection from: {1}'.format(timestamp.timeStamp(), address)
+                print '{0}: Connection from: {1}'.format(timestamp.time_stamp(), address)
                 data = connection.recv(255)
-                print "{0} Receiving\n\tFrom: {1}\n\tData: {2}".format(timestamp.timeStamp(), address, data)
+                print "{0} Receiving\n\tFrom: {1}\n\tData: {2}".format(timestamp.time_stamp(), address, data)
                 if data[:12] == 'BBallCounter':
                     #post to google form
                     update = True
@@ -40,7 +40,7 @@ class server():
                     elif data[13:].strip().upper() == "LABEL":
                         update = False
                         message = "BBallCounter:".format(count)
-                        print '{0}: Sending: {1}'.format(timestamp.timeStamp(), message)
+                        print '{0}: Sending: {1}'.format(timestamp.time_stamp(), message)
                         connection.send(message)
                     elif(self._should_update(address)):
                         if data[13:].strip().upper() == googleForm.FormConstants.YES.upper():
@@ -52,25 +52,25 @@ class server():
                         elif data[13:].strip().upper() == googleForm.FormConstants.NO.upper():
                             googleForm.post(googleForm.FormConstants.NO)
                         else:
-                            print '{0}: Ignoring message: {1}'.format(timestamp.timeStamp(), data[13:])
+                            print '{0}: Ignoring message: {1}'.format(timestamp.time_stamp(), data[13:])
                             update = False
                     else:
-                        print '{0}: Ignoring update from: {0}'.format(timestamp.timeStamp(), address)
+                        print '{0}: Ignoring update from: {0}'.format(timestamp.time_stamp(), address)
 
                     if update:
                         #get google form data
                         count = googleForm.get()
                         message = "BBallCounter:{0}".format(count)
-                        print '{0}: Sending: {1}'.format(timestamp.timeStamp(), message)
+                        print '{0}: Sending: {1}'.format(timestamp.time_stamp(), message)
                         connection.send(message)
                 else:
-                    print "{0}: Ignoring\n\tFrom: {1}\n\tData: {2}".format(timestamp.timeStamp(), address, data)
+                    print "{0}: Ignoring\n\tFrom: {1}\n\tData: {2}".format(timestamp.time_stamp(), address, data)
             except Exception as e:
                 print e
 
     def _should_update(self, ip):
         this_player = player(ip)
-        print "{0}: Investigating Player\n\t{1}".format(timestamp.timeStamp(), this_player)
+        print "{0}: Investigating Player\n\t{1}".format(timestamp.time_stamp(), this_player)
         result = updateRoster(this_player) # true if new date
         return result
 server.roster = {}
@@ -90,13 +90,13 @@ def updateRoster(player):
     result = True
     if player.ip in server.roster:
         if server.roster[player.ip] >= datetime.datetime.now().date():
-            print '{0}: Ignoring update from Player({1})\n\tOld Date: {2}\n\tNew Date: {3}'.format(timestamp.timeStamp(), player.ip, server.roster[player.ip], player.last_update)
+            print '{0}: Ignoring update from Player({1})\n\tOld Date: {2}\n\tNew Date: {3}'.format(timestamp.time_stamp(), player.ip, server.roster[player.ip], player.last_update)
             result = False
         else:
-            print '{0}: Updating Player({1})\n\tOld Date: {2}\n\tNew Date: {3}'.format(timestamp.timeStamp(), player.ip, server.roster[player.ip], player.last_update)
+            print '{0}: Updating Player({1})\n\tOld Date: {2}\n\tNew Date: {3}'.format(timestamp.time_stamp(), player.ip, server.roster[player.ip], player.last_update)
             server.roster[player.ip] = player.last_update
     else:
-        print '{0}: Adding New Player({1})\n\tNew Date: {2}'.format(timestamp.timeStamp(), player.ip, player.last_update)
+        print '{0}: Adding New Player({1})\n\tNew Date: {2}'.format(timestamp.time_stamp(), player.ip, player.last_update)
         server.roster[player.ip] = player.last_update
     return result
 

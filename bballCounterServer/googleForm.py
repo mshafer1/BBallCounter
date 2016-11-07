@@ -33,10 +33,10 @@ class FormConstants:
 
 
 def post(response):
-    print "{0}: Posting {1} to Google Form".format(timestamp.timeStamp(), response)
+    print "{0}: Posting {1} to Google Form".format(timestamp.time_stamp(), response)
     URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf1ZzOoMllQlGFaQzSGWyv5VXUpKrUa8DRKp_XRNZCaBAQfsQ/formResponse?entry.164115360=Widget+Responder&entry.462227184={0}&submit=Submit'.format(response)
     r = requests.get(URL)
-    print "{0}: Response code {1} from Google Form".format(timestamp.timeStamp(), r.status_code)
+    print "{0}: Response code {1} from Google Form".format(timestamp.time_stamp(), r.status_code)
 
 
 
@@ -82,7 +82,7 @@ def get_credentials():
 
 def get():
     count = 0
-    print "{0}: Getting data from Sheet".format(timestamp.timeStamp())
+    print "{0}: Getting data from Sheet".format(timestamp.time_stamp())
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
@@ -107,7 +107,7 @@ def get():
                 elif row[2].upper() == FormConstants.MAYBE.upper():
                     count += .5
             # print('%s, %s' % (row[1], row[2]))
-    print "{0}: Counted {1}".format(timestamp.timeStamp(), count)
+    print "{0}: Counted {1}".format(timestamp.time_stamp(), count)
     return int(floor(count))
 
 
