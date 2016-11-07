@@ -9,6 +9,7 @@ import timestamp
 
 
 def send_email(input):
+    message = 'Looks like game on' if input > 8 else ('Need a few more to commit' if input >= 4 else 'Looks like no game today')
     # me == my email address
     # you == recipient's email address
     me = "matthew.shafer@ni.com"
@@ -21,21 +22,22 @@ def send_email(input):
     msg = MIMEMultipart('alternative')
     tomorrow = datetime.date.today() + datetime.timedelta(days=1)
     when = '@ 4:30' if datetime.datetime.today().weekday() not in [4] else 'Saturday ({:%m/%d}) at 10:00'.format((tomorrow))
-    msg['Subject'] = "Basketball {0} - Current count: {1}".format(when, input)
+    msg['Subject'] = "Basketball {0} - ({1}) - {2}".format(when, input, message)
     msg['From'] = me
     msg['To'] = you
 
     # Create the body of the message (a plain-text and an HTML version).
-    text = "Looks like about {0} people".format(input)
+    text = "Looks like about {0} people\n".format(input, message)
     html = """
     <html>
       <head></head>
       <body>
         <h1>Expecting: {0}</h1>
+        <p>{1}</p>
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSf1ZzOoMllQlGFaQzSGWyv5VXUpKrUa8DRKp_XRNZCaBAQfsQ/viewanalytics">See response summary</a>
       </body>
     </html>
-    """.format(input)
+    """.format(input, message)
 
     # Record the MIME types of both parts - text/plain and text/html.
     part1 = MIMEText(text, 'plain')
