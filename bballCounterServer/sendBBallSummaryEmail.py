@@ -8,13 +8,15 @@ from email.mime.text import MIMEText
 import googleForm
 import timestamp
 
+EMAIL_LIST_FILE = 'summaryAddress.json'
+
 
 def send_email(input):
     message = 'Looks like game on' if input > 8 else ('Need a few more to commit' if input >= 4 else 'Looks like no game today')
     # me == my email address
     # you == recipient's email address
     me = "matthew.shafer@ni.com"
-    with open('summaryAddress.json','r') as addresses_file:
+    with open(EMAIL_LIST_FILE, 'r') as addresses_file:
         recipients = json.load(addresses_file)
     if len(recipients) == 0:
         raise Exception("Can't send to nobody")
