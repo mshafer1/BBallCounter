@@ -1,3 +1,4 @@
+import json
 import smtplib
 import datetime
 
@@ -13,7 +14,8 @@ def send_email(input):
     # me == my email address
     # you == recipient's email address
     me = "matthew.shafer@ni.com"
-    recipients = ['matthew.shafer@ni.com', 'mjshafer93@gmail.com']
+    with open('summaryAddress.json','r') as addresses_file:
+        recipients = json.load(addresses_file)
     if len(recipients) == 0:
         raise Exception("Can't send to nobody")
     you = ', '.join(recipients)
