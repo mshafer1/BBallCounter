@@ -1,18 +1,27 @@
 import json
 import smtplib
 import datetime
+from os import path
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 EMAIL_LIST_FILE = 'PrimaryList.json'
+EMAIL_CONFIG_FILE = 'emailConfig.json'
 
 if __name__ == '__main__':
     # me == my email address
     # you == recipient's email address
     me = "matthew.shafer@ni.com"
 
-    with open(EMAIL_LIST_FILE, 'r') as addresses_file:
+    config_file = path.join(path.dirname(path.realpath(__file__)),EMAIL_CONFIG_FILE)
+    with open(config_file, 'r') as configFile:
+        config = json.load(configFile)
+
+    me = config['SENDER_EMAIL']
+
+    file = path.join(path.dirname(path.realpath(__file__)),EMAIL_LIST_FILE)
+    with open(file, 'r') as addresses_file:
         recipients = json.load(addresses_file)
     if len(recipients) == 0:
         raise Exception("Can't send to nobody")
@@ -57,7 +66,7 @@ if __name__ == '__main__':
     s.ehlo()
     s.starttls()
     s.ehlo
-    s.login(me, '2016Matt#')
+    s.login(me, config['SENDER_PASSWD'])
     # sendmail function takes 3 arguments: sender's address, recipient's address
     # and message to send - here it is sent as one string.
     s.sendmail(me, recipients, msg.as_string())

@@ -1,6 +1,7 @@
 import json
 import smtplib
 import datetime
+from os import path
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -9,14 +10,20 @@ import googleForm
 import timestamp
 
 EMAIL_LIST_FILE = 'summaryAddress.json'
-
+EMAIL_CONFIG_FILE = 'emailConfig.json'
 
 def send_email(input):
     message = 'Looks like game on' if input > 8 else ('Need a few more to commit' if input >= 4 else 'Looks like no game today')
     # me == my email address
     # you == recipient's email address
-    me = "matthew.shafer@ni.com"
-    with open(EMAIL_LIST_FILE, 'r') as addresses_file:
+
+    config_file = path.join(path.dirname(path.realpath(__file__)),EMAIL_CONFIG_FILE)
+    with open(config_file, 'r') as configFile:
+        config = json.load(configFile)
+
+    me = config['SENDER_EMAIL']
+    file = path.join(path.dirname(path.realpath(__file__)),EMAIL_LIST_FILE)
+    with open(file, 'r') as addresses_file:
         recipients = json.load(addresses_file)
     if len(recipients) == 0:
         raise Exception("Can't send to nobody")
@@ -58,7 +65,7 @@ def send_email(input):
     s.ehlo()
     s.starttls()
     s.ehlo
-    s.login(me, '2016Matt#')
+    s.login(me, config['SENDER_PASSWD'])
     # sendmail function takes 3 arguments: sender's address, recipient's address
     # and message to send - here it is sent as one string.
     s.sendmail(me, recipients, msg.as_string())
@@ -68,7 +75,7 @@ def send_email(input):
 if __name__ == '__main__':
     count = googleForm.get()
 
-    if count > 0:
+    if count >= 0:
         send_email(count)
     else:
         print '{0}: Not sending'.format(timestamp.time_stamp())
